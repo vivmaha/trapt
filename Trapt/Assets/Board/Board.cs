@@ -6,7 +6,6 @@ using UnityEngine;
 public class Board : MonoBehaviour {
     public Tile originTile;
     public Enemy enemy;
-
     public int size = 5;
 
     private Dictionary<TilePosition, Tile> tilePositions;
@@ -102,7 +101,7 @@ public class Board : MonoBehaviour {
                 };
             }
         }
-        Destroy(originTile);
+        Destroy(originTile.gameObject);
 
         this.enemyPosition = new TilePosition(0, 0);
 	}
