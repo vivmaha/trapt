@@ -1,8 +1,7 @@
-﻿using UnityEngine;
-using System.Collections;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 public class Board : MonoBehaviour {
     public Tile originTile;
@@ -43,6 +42,7 @@ public class Board : MonoBehaviour {
 
     private Dictionary<TilePosition, Tile> tilePositions;
     private TilePosition enemyPosition;
+    private ShortestPath<TilePosition> shortestPath;
 
     private bool IsTileOnEdge(TilePosition position)
     {
@@ -59,59 +59,8 @@ public class Board : MonoBehaviour {
     }
 
     private void MoveEnemy()
-    {        
-        var visited = new HashSet<TilePosition>();
-        var toVisit = new List<TilePosition>() { this.enemyPosition };
-        var previous = new Dictionary<TilePosition, TilePosition>();
-        TilePosition closestExit = null;
-        while (closestExit == null)
-        {
-            var nextToVisit = new List<TilePosition>();
-            foreach (var tile in toVisit)
-            {
-                var neighbours = new List<TilePosition>();
-                neighbours.Add(new TilePosition(tile.X + 1, tile.Y + 0));
-                neighbours.Add(new TilePosition(tile.X - 1, tile.Y + 0));
-                neighbours.Add(new TilePosition(tile.X + 0, tile.Y - 1));
-                neighbours.Add(new TilePosition(tile.X + 0, tile.Y + 1));
-                if (Math.Abs(tile.Y) % 2 == 1)
-                {
-                    neighbours.Add(new TilePosition(tile.X + 1, tile.Y - 1));
-                    neighbours.Add(new TilePosition(tile.X + 1, tile.Y + 1));                    
-                } else
-                {
-                    neighbours.Add(new TilePosition(tile.X - 1, tile.Y - 1));
-                    neighbours.Add(new TilePosition(tile.X - 1, tile.Y + 1));
-                }
-
-
-                neighbours = neighbours.Where(
-                    neighbour =>
-                        this.IsTileOnBoard(neighbour) &&
-                        !visited.Contains(neighbour) && 
-                        this.tilePositions[neighbour].isActiveAndEnabled
-                ).ToList();
-
-                foreach (var neighbour in neighbours)
-                {
-                    previous[neighbour] = tile;
-                    visited.Add(neighbour);
-                    if (this.IsTileOnEdge(neighbour))
-                    {
-                        closestExit = neighbour;
-                    }
-                }
-                nextToVisit.AddRange(neighbours);
-            }
-            toVisit = nextToVisit;
-        }
-        var nextEnemyPosition = closestExit;
-        while (previous[nextEnemyPosition] != this.enemyPosition)
-        {
-            nextEnemyPosition = previous[nextEnemyPosition];
-        }
-
-        this.enemyPosition = nextEnemyPosition;
+    {
+        this.enemyPosition = this.shortestPath.FindAdjacentNodeClosestToDestination(this.enemyPosition, this.IsTileOnEdge);
         var enemyTile = this.tilePositions[this.enemyPosition];
         this.enemy.MoveTo(enemyTile.transform.position);
     }
@@ -119,6 +68,34 @@ public class Board : MonoBehaviour {
 	public void Start () {
 
         this.tilePositions = new Dictionary<TilePosition, Tile>();
+
+        this.shortestPath = new ShortestPath<TilePosition>(
+            getAdjacentNodes: position =>
+            {   
+                var adjacentNodes = new List<TilePosition>();
+                adjacentNodes.Add(new TilePosition(position.X + 1, position.Y + 0));
+                adjacentNodes.Add(new TilePosition(position.X - 1, position.Y + 0));
+                adjacentNodes.Add(new TilePosition(position.X + 0, position.Y - 1));
+                adjacentNodes.Add(new TilePosition(position.X + 0, position.Y + 1));
+                if (Math.Abs(position.Y) % 2 == 1)
+                {
+                    adjacentNodes.Add(new TilePosition(position.X + 1, position.Y - 1));
+                    adjacentNodes.Add(new TilePosition(position.X + 1, position.Y + 1));
+                }
+                else
+                {
+                    adjacentNodes.Add(new TilePosition(position.X - 1, position.Y - 1));
+                    adjacentNodes.Add(new TilePosition(position.X - 1, position.Y + 1));
+                }
+
+                adjacentNodes = adjacentNodes.Where(
+                    neighbour =>
+                        this.IsTileOnBoard(neighbour) &&
+                        this.tilePositions[neighbour].isActiveAndEnabled
+                ).ToList();
+
+                return adjacentNodes.ToArray();
+            });
         
 
 	    for (int i = -this.size; i <= this.size; i++)
