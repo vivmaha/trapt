@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Board : MonoBehaviour {
     public Tile originTile;
@@ -29,6 +30,11 @@ public class Board : MonoBehaviour {
     private void MoveEnemy()
     {
         this.enemyPosition = this.shortestPath.FindAdjacentNodeClosestToDestination(this.enemyPosition, this.IsTileOnEdge);
+        if (this.enemyPosition == null)
+        {
+            Game.level++;
+            SceneManager.LoadScene("Win");
+        }
         var enemyTile = this.tilePositions[this.enemyPosition];
         this.enemy.MoveTo(enemyTile.transform.position);
     }
@@ -90,7 +96,9 @@ public class Board : MonoBehaviour {
                     newTile.IsImmortal = true;
                 }
 
-                if (UnityEngine.Random.value < 0.1)
+                var pOfEmpty = Mathf.Lerp((float)0.1, 0, (Game.level - 1) / 10.0f);
+                                
+                if (UnityEngine.Random.value < pOfEmpty)
                 {
                     newTile.OnMouseDown();
                 }

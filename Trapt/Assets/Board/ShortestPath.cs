@@ -17,8 +17,13 @@ public class ShortestPath<T>
         var visitingNodes = new List<T>() { fromNode };
         var visitedFromNodes = new Dictionary<T, T>();
         T destinationNode = default(T);
-        while (destinationNode == null)
+        while(destinationNode == null)
         {
+            if (!visitingNodes.Any())
+            {
+                return default(T);
+            }
+
             var visitNextNodes = new List<T>();
             foreach (var visitingNode in visitingNodes)
             {
@@ -33,12 +38,13 @@ public class ShortestPath<T>
                     visitedNodes.Add(adjacentNode);
                     if (isDestinationNode(adjacentNode))
                     {
-                        destinationNode = adjacentNode;
+                        destinationNode = adjacentNode;                        
                     }
                 }
                 visitNextNodes.AddRange(adjacentNodes);
             }
-            visitingNodes = visitNextNodes;
+
+            visitingNodes = visitNextNodes;            
         }
 
         var adjacentNodeClosestToDestination = destinationNode;
